@@ -25,7 +25,7 @@
             background: white;
             border-radius: 16px;
             padding: 40px;
-            max-width: 500px;
+            max-width: 600px;
             width: 100%;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
@@ -53,21 +53,35 @@
 
         .word-display {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
             margin-bottom: 15px;
+            gap: 15px;
         }
 
         .word {
+            display: flex;
+            gap: 6px;
+        }
+
+        .word-letter {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #667eea;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 24px;
             font-weight: bold;
             color: #667eea;
-            letter-spacing: 2px;
+            background: #f0f3ff;
         }
 
         .arrow {
             color: #999;
-            font-size: 20px;
+            font-size: 24px;
+            font-weight: bold;
         }
 
         .moves-info {
@@ -101,34 +115,57 @@
             flex-shrink: 0;
         }
 
-        .step input {
+        .letter-boxes {
+            display: flex;
+            gap: 8px;
             flex: 1;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: bold;
+            justify-content: center;
         }
 
-        .step input:focus {
+        .letter-box {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #d3d6da;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            text-transform: uppercase;
+            background: white;
+            transition: all 0.2s;
+        }
+
+        .letter-box:focus {
             outline: none;
             border-color: #667eea;
+            border-width: 3px;
         }
 
-        .step input.correct {
-            background: #d4edda;
-            border-color: #28a745;
+        .letter-box.filled {
+            border-color: #878a8c;
         }
 
-        .step input.incorrect {
-            background: #f8d7da;
-            border-color: #dc3545;
+        .letter-box.correct {
+            background: #6aaa64;
+            border-color: #6aaa64;
+            color: white;
         }
 
-        .step input:disabled {
-            background: #e9ecef;
+        .letter-box.incorrect {
+            background: #c9b458;
+            border-color: #c9b458;
+            color: white;
+        }
+
+        .letter-box.error {
+            background: #787c7e;
+            border-color: #787c7e;
+            color: white;
+        }
+
+        .letter-box:disabled {
             cursor: not-allowed;
         }
 
@@ -320,8 +357,8 @@
             }
 
             init() {
-                document.getElementById('startWord').textContent = this.puzzle.start;
-                document.getElementById('endWord').textContent = this.puzzle.end;
+                this.renderWordBoxes('startWord', this.puzzle.start);
+                this.renderWordBoxes('endWord', this.puzzle.end);
                 document.getElementById('maxMoves').textContent = this.puzzle.moves;
 
                 this.renderBoard();
@@ -331,9 +368,21 @@
                 document.getElementById('resetBtn').addEventListener('click', () => this.reset());
             }
 
+            renderWordBoxes(elementId, word) {
+                const container = document.getElementById(elementId);
+                container.innerHTML = '';
+                for (let i = 0; i < word.length; i++) {
+                    const letterBox = document.createElement('div');
+                    letterBox.className = 'word-letter';
+                    letterBox.textContent = word[i];
+                    container.appendChild(letterBox);
+                }
+            }
+
             renderBoard() {
                 const board = document.getElementById('gameBoard');
                 board.innerHTML = '';
+                const wordLength = this.puzzle.start.length;
 
                 for (let i = 0; i < this.puzzle.moves; i++) {
                     const step = document.createElement('div');
@@ -343,73 +392,134 @@
                     stepNumber.className = 'step-number';
                     stepNumber.textContent = i + 1;
 
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.maxLength = this.puzzle.start.length;
-                    input.id = `step${i}`;
-                    input.value = this.attempts[i] || '';
+                    const letterBoxes = document.createElement('div');
+                    letterBoxes.className = 'letter-boxes';
 
-                    // Auto-uppercase and move to next field
-                    input.addEventListener('input', (e) => {
-                        e.target.value = e.target.value.toUpperCase();
-                        if (e.target.value.length === this.puzzle.start.length && i < this.puzzle.moves - 1) {
-                            document.getElementById(`step${i + 1}`).focus();
+                    // Create individual letter boxes
+                    for (let j = 0; j < wordLength; j++) {
+                        const box = document.createElement('input');
+                        box.type = 'text';
+                        box.className = 'letter-box';
+                        box.maxLength = 1;
+                        box.id = `box${i}-${j}`;
+
+                        // Pre-fill if we have saved attempts
+                        if (this.attempts[i] && this.attempts[i][j]) {
+                            box.value = this.attempts[i][j];
+                            box.classList.add('filled');
                         }
-                    });
+
+                        // Handle input
+                        box.addEventListener('input', (e) => {
+                            const value = e.target.value.toUpperCase();
+                            e.target.value = value;
+
+                            if (value) {
+                                e.target.classList.add('filled');
+                                // Move to next box
+                                if (j < wordLength - 1) {
+                                    document.getElementById(`box${i}-${j + 1}`).focus();
+                                } else if (i < this.puzzle.moves - 1) {
+                                    // Move to first box of next word
+                                    document.getElementById(`box${i + 1}-0`).focus();
+                                }
+                            }
+                        });
+
+                        // Handle backspace
+                        box.addEventListener('keydown', (e) => {
+                            if (e.key === 'Backspace' && !e.target.value && j > 0) {
+                                // Move to previous box and clear it
+                                const prevBox = document.getElementById(`box${i}-${j - 1}`);
+                                prevBox.focus();
+                                prevBox.value = '';
+                                prevBox.classList.remove('filled');
+                            }
+                        });
+
+                        letterBoxes.appendChild(box);
+                    }
 
                     step.appendChild(stepNumber);
-                    step.appendChild(input);
+                    step.appendChild(letterBoxes);
                     board.appendChild(step);
                 }
 
-                // Focus first input
-                document.getElementById('step0').focus();
+                // Focus first box
+                document.getElementById('box0-0').focus();
             }
 
             checkSolution() {
                 this.attempts = [];
                 let allValid = true;
                 let message = '';
+                const wordLength = this.puzzle.start.length;
 
-                // Collect all attempts
+                // Collect all attempts from letter boxes
                 for (let i = 0; i < this.puzzle.moves; i++) {
-                    const input = document.getElementById(`step${i}`);
-                    const value = input.value.toUpperCase().trim();
-                    this.attempts.push(value);
+                    let word = '';
+                    for (let j = 0; j < wordLength; j++) {
+                        const box = document.getElementById(`box${i}-${j}`);
+                        word += box.value.toUpperCase();
+                    }
+                    this.attempts.push(word);
                 }
 
                 // Validate each step
                 let prevWord = this.puzzle.start;
                 for (let i = 0; i < this.puzzle.moves; i++) {
-                    const input = document.getElementById(`step${i}`);
                     const word = this.attempts[i];
+                    let stepValid = true;
 
-                    input.className = '';
+                    // Reset all boxes in this step
+                    for (let j = 0; j < wordLength; j++) {
+                        const box = document.getElementById(`box${i}-${j}`);
+                        box.classList.remove('correct', 'incorrect', 'error');
+                    }
 
-                    if (!word || word.length !== this.puzzle.start.length) {
+                    if (!word || word.length !== wordLength) {
                         allValid = false;
-                        input.classList.add('incorrect');
+                        stepValid = false;
                         message = 'Please fill in all steps!';
+                        // Mark incomplete boxes
+                        for (let j = 0; j < wordLength; j++) {
+                            const box = document.getElementById(`box${i}-${j}`);
+                            if (!box.value) {
+                                box.classList.add('error');
+                            }
+                        }
                         continue;
                     }
 
                     // Check if valid word
                     if (!VALID_WORDS.has(word)) {
                         allValid = false;
-                        input.classList.add('incorrect');
+                        stepValid = false;
                         message = `"${word}" is not a valid word!`;
+                        for (let j = 0; j < wordLength; j++) {
+                            document.getElementById(`box${i}-${j}`).classList.add('incorrect');
+                        }
                         continue;
                     }
 
                     // Check if only one letter changed
                     if (!this.isOneLetterDifferent(prevWord, word)) {
                         allValid = false;
-                        input.classList.add('incorrect');
+                        stepValid = false;
                         message = `You must change exactly one letter from ${prevWord} to ${word}!`;
+                        for (let j = 0; j < wordLength; j++) {
+                            document.getElementById(`box${i}-${j}`).classList.add('incorrect');
+                        }
                         continue;
                     }
 
-                    input.classList.add('correct');
+                    // Mark all boxes as correct for this step
+                    if (stepValid) {
+                        for (let j = 0; j < wordLength; j++) {
+                            document.getElementById(`box${i}-${j}`).classList.add('correct');
+                        }
+                    }
+
                     prevWord = word;
                 }
 
@@ -417,6 +527,11 @@
                 if (allValid && this.attempts[this.puzzle.moves - 1] !== this.puzzle.end) {
                     allValid = false;
                     message = `Last word must be ${this.puzzle.end}!`;
+                    const lastStepIndex = this.puzzle.moves - 1;
+                    for (let j = 0; j < wordLength; j++) {
+                        document.getElementById(`box${lastStepIndex}-${j}`).classList.remove('correct');
+                        document.getElementById(`box${lastStepIndex}-${j}`).classList.add('incorrect');
+                    }
                 }
 
                 // Display result
@@ -450,8 +565,11 @@
             }
 
             disableInputs() {
+                const wordLength = this.puzzle.start.length;
                 for (let i = 0; i < this.puzzle.moves; i++) {
-                    document.getElementById(`step${i}`).disabled = true;
+                    for (let j = 0; j < wordLength; j++) {
+                        document.getElementById(`box${i}-${j}`).disabled = true;
+                    }
                 }
                 document.getElementById('checkBtn').disabled = true;
             }
