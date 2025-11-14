@@ -386,6 +386,7 @@
             'CART', 'CAST', 'CASE', 'CAGE', 'PAGE', 'PALE', 'PANE', 'PINE', 'FINE', 'HEAL', 'TEAL', 'FORE',
             'FIRE', 'FARE', 'FACE', 'PACE', 'RACE', 'RICE', 'RICH', 'RIPE', 'RIDE', 'HEAD', 'HEAR', 'TEAR',
             'FEAR', 'FEAT', 'BEAT', 'HEAT', 'LOSE', 'LORE', 'SAKE', 'SANE', 'MANE', 'ROPE', 'ROBE', 'RODE',
+            'TALL', 'MEAT', 'BANE', 'LANE', 'CODE',
             'HIDE', 'HIKE', 'LIKE', 'LIFE', 'LIFT', 'GIFT', 'GIRT', 'GIRL', 'GULL',
             'BULL', 'BULL', 'BALL', 'TALL', 'TALE', 'TAKE', 'MAKE', 'MADE', 'MATE',
             'MOTE', 'MORE', 'GORE', 'GONE', 'BONE', 'BORE', 'BOLD', 'GOLD', 'GILD',
@@ -407,13 +408,13 @@
 
         // Daily puzzles (start word, end word, number of moves)
         const PUZZLES = [
-            { start: 'HEAD', end: 'TAIL', moves: 3, solution: ['HEAL', 'TEAL', 'TAIL'] },
-            { start: 'FEAR', end: 'HEAT', moves: 3, solution: ['FEAT', 'BEAT', 'HEAT'] },
-            { start: 'LOSE', end: 'BONE', moves: 3, solution: ['LORE', 'BORE', 'BONE'] },
-            { start: 'RIDE', end: 'PACE', moves: 3, solution: ['RICE', 'RACE', 'PACE'] },
-            { start: 'HOPE', end: 'RODE', moves: 3, solution: ['ROPE', 'ROBE', 'RODE'] },
-            { start: 'MAKE', end: 'MANE', moves: 3, solution: ['SAKE', 'SANE', 'MANE'] },
-            { start: 'WARM', end: 'CORD', moves: 3, solution: ['WARD', 'CARD', 'CORD'] },
+            { start: 'HEAD', end: 'TAIL', moves: 3, solution: ['HEAL', 'TEAL', 'TALL'] },
+            { start: 'FEAR', end: 'HEAT', moves: 3, solution: ['FEAT', 'BEAT', 'MEAT'] },
+            { start: 'LOSE', end: 'BONE', moves: 3, solution: ['LORE', 'BORE', 'BANE'] },
+            { start: 'RIDE', end: 'PACE', moves: 3, solution: ['RICE', 'RACE', 'FACE'] },
+            { start: 'HOPE', end: 'RODE', moves: 3, solution: ['ROPE', 'ROBE', 'CODE'] },
+            { start: 'MAKE', end: 'MANE', moves: 3, solution: ['SAKE', 'SANE', 'LANE'] },
+            { start: 'WARM', end: 'CORD', moves: 3, solution: ['WARD', 'HARD', 'CARD'] },
         ];
 
         class WordLadderGame {
