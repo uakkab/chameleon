@@ -288,7 +288,7 @@
     <script>
         // Word dictionary for validation (common 4-letter words)
         const VALID_WORDS = new Set([
-            'COLD', 'WARM', 'CORD', 'WORD', 'WORM', 'CORE', 'WORE', 'WARE', 'CARE',
+            'COLD', 'WARM', 'CORD', 'WORD', 'WORM', 'CORE', 'WORE', 'WARE', 'CARE', 'TOTE', 'GALE',
             'CART', 'CAST', 'CASE', 'CAGE', 'PAGE', 'PALE', 'PANE', 'PINE', 'FINE',
             'FIRE', 'FARE', 'FACE', 'PACE', 'RACE', 'RICE', 'RICH', 'RIPE', 'RIDE',
             'HIDE', 'HIKE', 'LIKE', 'LIFE', 'LIFT', 'GIFT', 'GIRT', 'GIRL', 'GULL',
@@ -314,11 +314,11 @@
         const PUZZLES = [
             { start: 'COLD', end: 'WARM', moves: 4, solution: ['CORD', 'WORD', 'WORM', 'WARM'] },
             { start: 'LOVE', end: 'HATE', moves: 4, solution: ['DOVE', 'DOTE', 'DATE', 'HATE'] },
-            { start: 'FIRE', end: 'COOL', moves: 5, solution: ['FORE', 'CORE', 'CORK', 'COOK', 'COOL'] },
-            { start: 'LIFE', end: 'DEAD', moves: 6, solution: ['LIKE', 'DIKE', 'DIKE', 'DIRE', 'SIRE', 'SIDE'] },
-            { start: 'HEAD', end: 'TAIL', moves: 5, solution: ['HEAL', 'TEAL', 'TELL', 'TALL', 'TAIL'] },
-            { start: 'COOL', end: 'WARM', moves: 5, solution: ['COAL', 'COAT', 'CART', 'WARD', 'WARM'] },
-            { start: 'PALE', end: 'DARK', moves: 6, solution: ['PANE', 'BANE', 'BANE', 'BARK', 'DARK', 'DARK'] },
+            { start: 'HEAD', end: 'TAIL', moves: 4, solution: ['HEAL', 'TEAL', 'TALL', 'TAIL'] },
+            { start: 'FIRE', end: 'COOL', moves: 4, solution: ['FORE', 'CORE', 'COAL', 'COOL'] },
+            { start: 'MAKE', end: 'TAKE', moves: 4, solution: ['MATE', 'MOTE', 'TOTE', 'TAKE'] },
+            { start: 'BOLD', end: 'MILD', moves: 4, solution: ['GOLD', 'GILD', 'MILD', 'MILD'] },
+            { start: 'GATE', end: 'LATE', moves: 4, solution: ['GALE', 'GALL', 'TALL', 'LATE'] },
         ];
 
         class WordLadderGame {
