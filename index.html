@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Ladder - Daily Puzzle</title>
+    <title>Gergit - Daily Word Puzzle</title>
     <style>
         * {
             margin: 0;
@@ -72,14 +72,8 @@
             font-weight: bold;
             letter-spacing: 1px;
             text-align: center;
-            color: #333;
-            border: 1px solid #ddd;
-        }
-
-        .history-item.invalid {
-            color: #dc3545;
-            border-color: #dc3545;
-            text-decoration: line-through;
+            color: #28a745;
+            border: 1px solid #28a745;
         }
 
         h1 {
@@ -87,6 +81,20 @@
             color: #333;
             margin-bottom: 10px;
             font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .chameleon-icon {
+            font-size: 32px;
+            animation: colorShift 3s infinite;
+        }
+
+        @keyframes colorShift {
+            0%, 100% { filter: hue-rotate(0deg); }
+            50% { filter: hue-rotate(120deg); }
         }
 
         .subtitle {
@@ -214,25 +222,32 @@
             margin: 20px 0;
             text-align: center;
             font-weight: bold;
-            display: none;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .message:empty {
+            visibility: hidden;
         }
 
         .message.error {
             background: #f8d7da;
             color: #721c24;
-            display: block;
+            visibility: visible;
         }
 
         .message.success {
             background: #d4edda;
             color: #155724;
-            display: block;
+            visibility: visible;
         }
 
         .message.info {
             background: #d1ecf1;
             color: #0c5460;
-            display: block;
+            visibility: visible;
         }
 
         .buttons {
@@ -325,13 +340,13 @@
 </head>
 <body>
     <div class="container">
-        <h1>🪜 Word Ladder</h1>
-        <div class="subtitle">Daily Puzzle - One puzzle per day!</div>
+        <h1><span class="chameleon-icon">🦎</span>Gergit</h1>
+        <div class="subtitle">Daily Word Challenge</div>
 
         <div class="game-container">
             <div class="main-game">
                 <div class="puzzle-info">
-                    <div class="moves-info">Complete the word ladder</div>
+                    <div class="moves-info">Transform START to END by changing one letter at a time</div>
                 </div>
 
                 <div class="message" id="message"></div>
@@ -346,18 +361,19 @@
                 <div class="stats" id="stats"></div>
 
                 <div class="rules">
-                    <h3>Rules:</h3>
+                    <h3>How to Play:</h3>
                     <ul>
                         <li>Change exactly one letter per step</li>
                         <li>Each step must be a valid word</li>
-                        <li>Auto-checks when word is complete</li>
-                        <li>New puzzle available daily at midnight!</li>
+                        <li>Auto-validates when word is complete</li>
+                        <li>Valid words appear in green panel →</li>
+                        <li>New puzzle daily at midnight!</li>
                     </ul>
                 </div>
             </div>
 
             <div class="history-panel">
-                <div class="history-title">Attempted Words</div>
+                <div class="history-title">Valid Words</div>
                 <div class="history-list" id="historyList"></div>
             </div>
         </div>
@@ -429,13 +445,11 @@
                 const historyList = document.getElementById('historyList');
                 historyList.innerHTML = '';
 
-                this.wordHistory.forEach(item => {
+                // Only show valid words
+                this.wordHistory.forEach(word => {
                     const historyItem = document.createElement('div');
                     historyItem.className = 'history-item';
-                    if (!item.valid) {
-                        historyItem.classList.add('invalid');
-                    }
-                    historyItem.textContent = item.word;
+                    historyItem.textContent = word;
                     historyList.appendChild(historyItem);
                 });
             }
@@ -572,17 +586,17 @@
                 // Check if valid word
                 if (!VALID_WORDS.has(word)) {
                     isValid = false;
-                    errorMessage = `"${word}" is not a valid word!`;
+                    errorMessage = 'Invalid word';
                 } else if (!this.isOneLetterDifferent(prevWord, word)) {
                     isValid = false;
-                    errorMessage = `You must change exactly one letter from ${prevWord}!`;
+                    errorMessage = `Must change exactly one letter from ${prevWord}`;
                 }
 
-                // Add to history
-                this.wordHistory.push({ word, valid: isValid });
-                this.updateHistory();
-
                 if (isValid) {
+                    // Only add valid words to history
+                    this.wordHistory.push(word);
+                    this.updateHistory();
+
                     // Valid word - mark as correct and move to next row
                     const attemptIndex = rowIndex - 1;
                     this.attempts[attemptIndex] = word;
