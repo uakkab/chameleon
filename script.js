@@ -41,6 +41,7 @@ class WordLadderGame {
     constructor() {
         this.puzzle = this.getDailyPuzzle();
         this.attempts = [];
+        this.changedPositions = []; // Track which position changed for each row
         this.wordHistory = [];
         this.loadState();
         this.init();
@@ -130,6 +131,10 @@ class WordLadderGame {
                     if (this.attempts[attemptIndex] && this.attempts[attemptIndex][j]) {
                         box.value = this.attempts[attemptIndex][j];
                         box.classList.add('filled', 'correct');
+                        // Highlight the changed letter
+                        if (this.changedPositions[attemptIndex] === j) {
+                            box.classList.add('changed');
+                        }
                         box.disabled = true;
                     }
 
@@ -231,9 +236,33 @@ class WordLadderGame {
             const attemptIndex = rowIndex - 1;
             this.attempts[attemptIndex] = word;
 
+            // Find the previous word to compare
+            let previousWord;
+            if (rowIndex === 1) {
+                // First editable row - compare with START word
+                previousWord = this.puzzle.start;
+            } else {
+                // Compare with the previous correct attempt
+                previousWord = this.attempts[attemptIndex - 1];
+            }
+
+            // Find which position changed
+            let changedPosition = -1;
+            for (let j = 0; j < wordLength; j++) {
+                if (word[j] !== previousWord[j]) {
+                    changedPosition = j;
+                    break;
+                }
+            }
+            this.changedPositions[attemptIndex] = changedPosition;
+
             for (let j = 0; j < wordLength; j++) {
                 const box = document.getElementById(`box${rowIndex}-${j}`);
                 box.classList.add('correct');
+                // Highlight the changed letter
+                if (j === changedPosition) {
+                    box.classList.add('changed');
+                }
                 box.disabled = true;
             }
 
@@ -353,6 +382,7 @@ class WordLadderGame {
 
     reset() {
         this.attempts = [];
+        this.changedPositions = [];
         this.wordHistory = [];
         this.renderBoard();
         this.updateHistory();
@@ -369,6 +399,7 @@ class WordLadderGame {
         const state = {
             date: this.getToday(),
             attempts: this.attempts,
+            changedPositions: this.changedPositions,
             wordHistory: this.wordHistory,
             puzzle: this.puzzle
         };
@@ -382,6 +413,7 @@ class WordLadderGame {
             if (state.date === this.getToday() &&
                 JSON.stringify(state.puzzle) === JSON.stringify(this.puzzle)) {
                 this.attempts = state.attempts || [];
+                this.changedPositions = state.changedPositions || [];
                 this.wordHistory = state.wordHistory || [];
             }
         }
