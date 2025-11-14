@@ -156,52 +156,67 @@
             background: #dc3545;
         }
 
-        .word-input-container {
-            flex: 1;
+        .letter-boxes {
             display: flex;
+            gap: 8px;
+            flex: 1;
             justify-content: center;
         }
 
-        .word-input {
-            width: 200px;
-            height: 50px;
+        .letter-box {
+            width: 60px;
+            height: 60px;
             border: 2px solid #d3d6da;
-            border-radius: 8px;
-            font-size: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
             font-weight: bold;
             text-transform: uppercase;
-            text-align: center;
-            padding: 10px;
             background: white;
             transition: all 0.2s;
+            caret-color: transparent;
+            text-align: center;
         }
 
-        .word-input:focus {
+        .letter-box:focus {
             outline: none;
             border-color: #667eea;
             border-width: 3px;
         }
 
-        .word-input.correct {
+        .letter-box.filled {
+            border-color: #878a8c;
+        }
+
+        .letter-box.correct {
             background: #6aaa64;
             border-color: #6aaa64;
             color: white;
         }
 
-        .word-input.incorrect {
+        .letter-box.incorrect {
             background: #c9b458;
             border-color: #c9b458;
             color: white;
         }
 
-        .word-input:disabled {
+        .letter-box.error {
+            background: #787c7e;
+            border-color: #787c7e;
+            color: white;
+        }
+
+        .letter-box:disabled {
             cursor: not-allowed;
         }
 
-        .word-input.prefilled {
+        .letter-box.prefilled {
             background: #f0f3ff;
             border-color: #667eea;
             color: #667eea;
+            font-weight: bold;
             cursor: default;
         }
 
@@ -473,66 +488,81 @@
                         stepNumber.textContent = i;
                     }
 
-                    const inputContainer = document.createElement('div');
-                    inputContainer.className = 'word-input-container';
-
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.className = 'word-input';
-                    input.maxLength = wordLength;
-                    input.id = `word${i}`;
+                    const letterBoxes = document.createElement('div');
+                    letterBoxes.className = 'letter-boxes';
 
                     // Determine if this row is editable
                     const isStart = i === 0;
                     const isEnd = i === totalRows - 1;
+                    const isEditable = !isStart && !isEnd;
 
-                    // Pre-fill START and END rows
-                    if (isStart) {
-                        input.value = this.puzzle.start;
-                        input.disabled = true;
-                        input.classList.add('prefilled');
-                    } else if (isEnd) {
-                        input.value = this.puzzle.end;
-                        input.disabled = true;
-                        input.classList.add('prefilled');
-                    } else {
-                        // Editable rows - restore saved attempts
-                        const attemptIndex = i - 1;
-                        if (this.attempts[attemptIndex]) {
-                            input.value = this.attempts[attemptIndex];
-                            input.classList.add('correct');
-                            input.disabled = true;
+                    // Create individual letter boxes
+                    for (let j = 0; j < wordLength; j++) {
+                        const box = document.createElement('input');
+                        box.type = 'text';
+                        box.className = 'letter-box';
+                        box.maxLength = 1;
+                        box.id = `box${i}-${j}`;
+
+                        // Pre-fill START and END rows
+                        if (isStart) {
+                            box.value = this.puzzle.start[j];
+                            box.disabled = true;
+                            box.classList.add('prefilled');
+                        } else if (isEnd) {
+                            box.value = this.puzzle.end[j];
+                            box.disabled = true;
+                            box.classList.add('prefilled');
+                        } else {
+                            // Editable rows - restore saved attempts
+                            const attemptIndex = i - 1; // Subtract 1 because START is row 0
+                            if (this.attempts[attemptIndex] && this.attempts[attemptIndex][j]) {
+                                box.value = this.attempts[attemptIndex][j];
+                                box.classList.add('filled', 'correct');
+                                box.disabled = true;
+                            }
+
+                            // Handle input
+                            box.addEventListener('input', (e) => {
+                                const value = e.target.value.toUpperCase();
+                                e.target.value = value;
+
+                                if (value) {
+                                    e.target.classList.add('filled');
+                                    // Move to next box
+                                    if (j < wordLength - 1) {
+                                        document.getElementById(`box${i}-${j + 1}`).focus();
+                                    } else {
+                                        // Last letter of the word - auto-check
+                                        setTimeout(() => this.checkCurrentWord(i), 100);
+                                    }
+                                }
+                            });
+
+                            // Handle backspace
+                            box.addEventListener('keydown', (e) => {
+                                if (e.key === 'Backspace' && !e.target.value && j > 0) {
+                                    // Move to previous box and clear it
+                                    const prevBox = document.getElementById(`box${i}-${j - 1}`);
+                                    prevBox.focus();
+                                    prevBox.value = '';
+                                    prevBox.classList.remove('filled');
+                                }
+                            });
                         }
 
-                        // Handle input - auto-check when word is complete
-                        input.addEventListener('input', (e) => {
-                            const value = e.target.value.toUpperCase();
-                            e.target.value = value;
-
-                            // Auto-check when word length is reached
-                            if (value.length === wordLength) {
-                                setTimeout(() => this.checkCurrentWord(i), 100);
-                            }
-                        });
-
-                        // Handle Enter key
-                        input.addEventListener('keydown', (e) => {
-                            if (e.key === 'Enter' && e.target.value.length === wordLength) {
-                                this.checkCurrentWord(i);
-                            }
-                        });
+                        letterBoxes.appendChild(box);
                     }
 
-                    inputContainer.appendChild(input);
                     step.appendChild(stepNumber);
-                    step.appendChild(inputContainer);
+                    step.appendChild(letterBoxes);
                     board.appendChild(step);
                 }
 
                 // Focus first empty row
                 for (let i = 1; i < totalRows - 1; i++) {
                     if (!this.attempts[i - 1]) {
-                        document.getElementById(`word${i}`).focus();
+                        document.getElementById(`box${i}-0`).focus();
                         break;
                     }
                 }
@@ -542,9 +572,12 @@
                 const wordLength = this.puzzle.start.length;
                 const totalRows = this.puzzle.moves + 2;
 
-                // Get the word from the input
-                const input = document.getElementById(`word${rowIndex}`);
-                const word = input.value.toUpperCase();
+                // Collect the word from the current row
+                let word = '';
+                for (let j = 0; j < wordLength; j++) {
+                    const box = document.getElementById(`box${rowIndex}-${j}`);
+                    word += box.value.toUpperCase();
+                }
 
                 // Check if word is complete
                 if (word.length !== wordLength) {
@@ -563,8 +596,12 @@
                     messageEl.textContent = 'Not a valid word';
 
                     setTimeout(() => {
-                        input.value = '';
-                        input.classList.remove('correct', 'incorrect');
+                        for (let j = 0; j < wordLength; j++) {
+                            const box = document.getElementById(`box${rowIndex}-${j}`);
+                            box.value = '';
+                            box.classList.remove('filled', 'correct', 'incorrect', 'error');
+                        }
+                        document.getElementById(`box${rowIndex}-0`).focus();
                         messageEl.className = 'message';
                         messageEl.textContent = '';
                     }, 1000);
@@ -583,8 +620,11 @@
                     const attemptIndex = rowIndex - 1;
                     this.attempts[attemptIndex] = word;
 
-                    input.classList.add('correct');
-                    input.disabled = true;
+                    for (let j = 0; j < wordLength; j++) {
+                        const box = document.getElementById(`box${rowIndex}-${j}`);
+                        box.classList.add('correct');
+                        box.disabled = true;
+                    }
 
                     // Move focus to next empty row (unless this is the last editable row)
                     const lastEditableRow = totalRows - 2;
@@ -594,9 +634,9 @@
                             const nextAttemptIndex = nextRow - 1;
                             if (!this.attempts[nextAttemptIndex]) {
                                 setTimeout(() => {
-                                    const nextInput = document.getElementById(`word${nextRow}`);
-                                    if (nextInput && !nextInput.disabled) {
-                                        nextInput.focus();
+                                    const firstBox = document.getElementById(`box${nextRow}-0`);
+                                    if (firstBox && !firstBox.disabled) {
+                                        firstBox.focus();
                                     }
                                 }, 100);
                                 break;
@@ -628,12 +668,18 @@
                     messageEl.className = 'message error';
                     messageEl.textContent = 'Valid word, but not the correct one for this position';
 
-                    input.classList.add('incorrect');
+                    for (let j = 0; j < wordLength; j++) {
+                        const box = document.getElementById(`box${rowIndex}-${j}`);
+                        box.classList.add('incorrect');
+                    }
 
                     setTimeout(() => {
-                        input.value = '';
-                        input.classList.remove('incorrect');
-                        input.focus();
+                        for (let j = 0; j < wordLength; j++) {
+                            const box = document.getElementById(`box${rowIndex}-${j}`);
+                            box.value = '';
+                            box.classList.remove('filled', 'correct', 'incorrect', 'error');
+                        }
+                        document.getElementById(`box${rowIndex}-0`).focus();
 
                         setTimeout(() => {
                             messageEl.className = 'message';
@@ -683,10 +729,13 @@
             }
 
             disableInputs() {
+                const wordLength = this.puzzle.start.length;
                 const totalRows = this.puzzle.moves + 2;
                 // Disable only editable rows (not START or END which are already disabled)
                 for (let i = 1; i < totalRows - 1; i++) {
-                    document.getElementById(`word${i}`).disabled = true;
+                    for (let j = 0; j < wordLength; j++) {
+                        document.getElementById(`box${i}-${j}`).disabled = true;
+                    }
                 }
                 document.getElementById('checkBtn').disabled = true;
             }
