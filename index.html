@@ -71,11 +71,6 @@
             font-weight: bold;
             letter-spacing: 1px;
             text-align: center;
-            color: #28a745;
-            border: 1px solid #28a745;
-        }
-
-        .history-item.incorrect {
             color: #c9b458;
             border: 1px solid #c9b458;
         }
@@ -371,14 +366,14 @@
                         <li>Each row has ONE correct word</li>
                         <li>Fill in rows in any order you like</li>
                         <li>Auto-validates when word is complete</li>
-                        <li>Correct words appear in green panel →</li>
+                        <li>Incorrect (but valid) words shown in panel →</li>
                         <li>New puzzle daily at midnight!</li>
                     </ul>
                 </div>
             </div>
 
             <div class="history-panel">
-                <div class="history-title">Valid Words</div>
+                <div class="history-title">Incorrect Attempts</div>
                 <div class="history-list" id="historyList"></div>
             </div>
         </div>
@@ -452,15 +447,14 @@
                 const historyList = document.getElementById('historyList');
                 historyList.innerHTML = '';
 
-                // Show all valid words (both correct and incorrect)
+                // Only show valid words that were incorrect
                 this.wordHistory.forEach(entry => {
-                    const historyItem = document.createElement('div');
-                    historyItem.className = 'history-item';
                     if (!entry.isCorrect) {
-                        historyItem.classList.add('incorrect');
+                        const historyItem = document.createElement('div');
+                        historyItem.className = 'history-item';
+                        historyItem.textContent = entry.word;
+                        historyList.appendChild(historyItem);
                     }
-                    historyItem.textContent = entry.word;
-                    historyList.appendChild(historyItem);
                 });
             }
 
