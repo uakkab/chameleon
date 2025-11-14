@@ -346,7 +346,7 @@
         <div class="game-container">
             <div class="main-game">
                 <div class="puzzle-info">
-                    <div class="moves-info">Transform START to END by changing one letter at a time</div>
+                    <div class="moves-info">Fill in the word ladder - Each row has one correct word!</div>
                 </div>
 
                 <div class="message" id="message"></div>
@@ -363,10 +363,10 @@
                 <div class="rules">
                     <h3>How to Play:</h3>
                     <ul>
-                        <li>Change exactly one letter per step</li>
-                        <li>Each step must be a valid word</li>
+                        <li>Each row has ONE correct word</li>
+                        <li>Fill in rows in any order you like</li>
                         <li>Auto-validates when word is complete</li>
-                        <li>Valid words appear in green panel →</li>
+                        <li>Correct words appear in green panel →</li>
                         <li>New puzzle daily at midnight!</li>
                     </ul>
                 </div>
@@ -421,7 +421,6 @@
                 this.puzzle = this.getDailyPuzzle();
                 this.attempts = [];
                 this.wordHistory = [];
-                this.currentRow = 1; // Start at row 1 (after START)
                 this.loadState();
                 this.init();
             }
@@ -550,9 +549,12 @@
                     board.appendChild(step);
                 }
 
-                // Focus first editable box of current row
-                if (this.currentRow < totalRows - 1) {
-                    document.getElementById(`box${this.currentRow}-0`).focus();
+                // Focus first empty row
+                for (let i = 1; i < totalRows - 1; i++) {
+                    if (!this.attempts[i - 1]) {
+                        document.getElementById(`box${i}-0`).focus();
+                        break;
+                    }
                 }
             }
 
@@ -572,25 +574,18 @@
                     return;
                 }
 
-                // Determine previous word (either START or the last valid attempt)
-                let prevWord;
-                if (rowIndex === 1) {
-                    prevWord = this.puzzle.start;
-                } else {
-                    const prevAttemptIndex = rowIndex - 2;
-                    prevWord = this.attempts[prevAttemptIndex];
-                }
+                // Get the expected word for this row from the solution
+                const solutionIndex = rowIndex - 1; // Row 1 = solution[0], Row 2 = solution[1], etc.
+                const expectedWord = this.puzzle.solution[solutionIndex];
 
-                let isValid = true;
+                let isValid = false;
                 let errorMessage = '';
 
-                // Check if valid word
-                if (!VALID_WORDS.has(word)) {
-                    isValid = false;
+                // Check if the word matches the expected solution for this position
+                if (word === expectedWord) {
+                    isValid = true;
+                } else {
                     errorMessage = 'Invalid word';
-                } else if (!this.isOneLetterDifferent(prevWord, word)) {
-                    isValid = false;
-                    errorMessage = `Must change exactly one letter from ${prevWord}`;
                 }
 
                 if (isValid) {
@@ -598,7 +593,7 @@
                     this.wordHistory.push(word);
                     this.updateHistory();
 
-                    // Valid word - mark as correct and move to next row
+                    // Valid word - mark as correct and lock it
                     const attemptIndex = rowIndex - 1;
                     this.attempts[attemptIndex] = word;
 
@@ -608,24 +603,21 @@
                         box.disabled = true;
                     }
 
-                    // Check if this was the last row before END
-                    if (rowIndex === totalRows - 2) {
-                        // Check if it connects to END word
-                        if (this.isOneLetterDifferent(word, this.puzzle.end)) {
-                            // Puzzle solved!
-                            const messageEl = document.getElementById('message');
-                            messageEl.className = 'message success';
-                            messageEl.textContent = '🎉 Congratulations! You solved the puzzle!';
-                            this.saveWin();
-                        } else {
-                            const messageEl = document.getElementById('message');
-                            messageEl.className = 'message error';
-                            messageEl.textContent = `${word} doesn't connect to ${this.puzzle.end}! Reset to try again.`;
+                    // Check if all rows are complete
+                    let allComplete = true;
+                    for (let i = 0; i < this.puzzle.moves; i++) {
+                        if (!this.attempts[i]) {
+                            allComplete = false;
+                            break;
                         }
-                    } else {
-                        // Move to next row
-                        this.currentRow = rowIndex + 1;
-                        document.getElementById(`box${this.currentRow}-0`).focus();
+                    }
+
+                    if (allComplete) {
+                        // Puzzle solved!
+                        const messageEl = document.getElementById('message');
+                        messageEl.className = 'message success';
+                        messageEl.textContent = '🎉 Congratulations! You solved the puzzle!';
+                        this.saveWin();
                     }
 
                     this.saveState();
@@ -792,7 +784,6 @@
             reset() {
                 this.attempts = [];
                 this.wordHistory = [];
-                this.currentRow = 1;
                 this.renderBoard();
                 this.updateHistory();
 
@@ -809,7 +800,6 @@
                     date: this.getToday(),
                     attempts: this.attempts,
                     wordHistory: this.wordHistory,
-                    currentRow: this.currentRow,
                     puzzle: this.puzzle
                 };
                 localStorage.setItem('wordLadderState', JSON.stringify(state));
@@ -823,7 +813,6 @@
                         JSON.stringify(state.puzzle) === JSON.stringify(this.puzzle)) {
                         this.attempts = state.attempts || [];
                         this.wordHistory = state.wordHistory || [];
-                        this.currentRow = state.currentRow || 1;
                     }
                 }
             }
