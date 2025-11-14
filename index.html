@@ -874,6 +874,25 @@
                         box.disabled = true;
                     }
 
+                    // Move focus to next empty row (unless this is the last editable row)
+                    const lastEditableRow = totalRows - 2; // Row before END
+                    if (rowIndex < lastEditableRow) {
+                        // Find next empty row
+                        for (let nextRow = rowIndex + 1; nextRow <= lastEditableRow; nextRow++) {
+                            const nextAttemptIndex = nextRow - 1;
+                            if (!this.attempts[nextAttemptIndex]) {
+                                // Found an empty row, focus on its first box
+                                setTimeout(() => {
+                                    const firstBox = document.getElementById(`box${nextRow}-0`);
+                                    if (firstBox && !firstBox.disabled) {
+                                        firstBox.focus();
+                                    }
+                                }, 100);
+                                break;
+                            }
+                        }
+                    }
+
                     // Check if all rows are complete
                     let allComplete = true;
                     for (let i = 0; i < this.puzzle.moves; i++) {
