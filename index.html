@@ -78,6 +78,11 @@
             border: 1px solid #28a745;
         }
 
+        .history-item.incorrect {
+            color: #c9b458;
+            border: 1px solid #c9b458;
+        }
+
         h1 {
             text-align: center;
             color: #333;
@@ -154,67 +159,52 @@
             background: #dc3545;
         }
 
-        .letter-boxes {
-            display: flex;
-            gap: 8px;
+        .word-input-container {
             flex: 1;
+            display: flex;
             justify-content: center;
         }
 
-        .letter-box {
-            width: 60px;
-            height: 60px;
+        .word-input {
+            width: 200px;
+            height: 50px;
             border: 2px solid #d3d6da;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
+            border-radius: 8px;
+            font-size: 24px;
             font-weight: bold;
             text-transform: uppercase;
+            text-align: center;
+            padding: 10px;
             background: white;
             transition: all 0.2s;
-            caret-color: transparent;
-            text-align: center;
         }
 
-        .letter-box:focus {
+        .word-input:focus {
             outline: none;
             border-color: #667eea;
             border-width: 3px;
         }
 
-        .letter-box.filled {
-            border-color: #878a8c;
-        }
-
-        .letter-box.correct {
+        .word-input.correct {
             background: #6aaa64;
             border-color: #6aaa64;
             color: white;
         }
 
-        .letter-box.incorrect {
+        .word-input.incorrect {
             background: #c9b458;
             border-color: #c9b458;
             color: white;
         }
 
-        .letter-box.error {
-            background: #787c7e;
-            border-color: #787c7e;
-            color: white;
-        }
-
-        .letter-box:disabled {
+        .word-input:disabled {
             cursor: not-allowed;
         }
 
-        .letter-box.prefilled {
+        .word-input.prefilled {
             background: #f0f3ff;
             border-color: #667eea;
             color: #667eea;
-            font-weight: bold;
             cursor: default;
         }
 
@@ -742,11 +732,14 @@
                 const historyList = document.getElementById('historyList');
                 historyList.innerHTML = '';
 
-                // Only show valid words
-                this.wordHistory.forEach(word => {
+                // Show all valid words (both correct and incorrect)
+                this.wordHistory.forEach(entry => {
                     const historyItem = document.createElement('div');
                     historyItem.className = 'history-item';
-                    historyItem.textContent = word;
+                    if (!entry.isCorrect) {
+                        historyItem.classList.add('incorrect');
+                    }
+                    historyItem.textContent = entry.word;
                     historyList.appendChild(historyItem);
                 });
             }
@@ -775,81 +768,66 @@
                         stepNumber.textContent = i;
                     }
 
-                    const letterBoxes = document.createElement('div');
-                    letterBoxes.className = 'letter-boxes';
+                    const inputContainer = document.createElement('div');
+                    inputContainer.className = 'word-input-container';
+
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'word-input';
+                    input.maxLength = wordLength;
+                    input.id = `word${i}`;
 
                     // Determine if this row is editable
                     const isStart = i === 0;
                     const isEnd = i === totalRows - 1;
-                    const isEditable = !isStart && !isEnd;
 
-                    // Create individual letter boxes
-                    for (let j = 0; j < wordLength; j++) {
-                        const box = document.createElement('input');
-                        box.type = 'text';
-                        box.className = 'letter-box';
-                        box.maxLength = 1;
-                        box.id = `box${i}-${j}`;
-
-                        // Pre-fill START and END rows
-                        if (isStart) {
-                            box.value = this.puzzle.start[j];
-                            box.disabled = true;
-                            box.classList.add('prefilled');
-                        } else if (isEnd) {
-                            box.value = this.puzzle.end[j];
-                            box.disabled = true;
-                            box.classList.add('prefilled');
-                        } else {
-                            // Editable rows - restore saved attempts
-                            const attemptIndex = i - 1; // Subtract 1 because START is row 0
-                            if (this.attempts[attemptIndex] && this.attempts[attemptIndex][j]) {
-                                box.value = this.attempts[attemptIndex][j];
-                                box.classList.add('filled', 'correct');
-                                box.disabled = true;
-                            }
-
-                            // Handle input
-                            box.addEventListener('input', (e) => {
-                                const value = e.target.value.toUpperCase();
-                                e.target.value = value;
-
-                                if (value) {
-                                    e.target.classList.add('filled');
-                                    // Move to next box
-                                    if (j < wordLength - 1) {
-                                        document.getElementById(`box${i}-${j + 1}`).focus();
-                                    } else {
-                                        // Last letter of the word - auto-check
-                                        setTimeout(() => this.checkCurrentWord(i), 100);
-                                    }
-                                }
-                            });
-
-                            // Handle backspace
-                            box.addEventListener('keydown', (e) => {
-                                if (e.key === 'Backspace' && !e.target.value && j > 0) {
-                                    // Move to previous box and clear it
-                                    const prevBox = document.getElementById(`box${i}-${j - 1}`);
-                                    prevBox.focus();
-                                    prevBox.value = '';
-                                    prevBox.classList.remove('filled');
-                                }
-                            });
+                    // Pre-fill START and END rows
+                    if (isStart) {
+                        input.value = this.puzzle.start;
+                        input.disabled = true;
+                        input.classList.add('prefilled');
+                    } else if (isEnd) {
+                        input.value = this.puzzle.end;
+                        input.disabled = true;
+                        input.classList.add('prefilled');
+                    } else {
+                        // Editable rows - restore saved attempts
+                        const attemptIndex = i - 1;
+                        if (this.attempts[attemptIndex]) {
+                            input.value = this.attempts[attemptIndex];
+                            input.classList.add('correct');
+                            input.disabled = true;
                         }
 
-                        letterBoxes.appendChild(box);
+                        // Handle input - auto-check when word is complete
+                        input.addEventListener('input', (e) => {
+                            const value = e.target.value.toUpperCase();
+                            e.target.value = value;
+
+                            // Auto-check when word length is reached
+                            if (value.length === wordLength) {
+                                setTimeout(() => this.checkCurrentWord(i), 100);
+                            }
+                        });
+
+                        // Handle Enter key
+                        input.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter' && e.target.value.length === wordLength) {
+                                this.checkCurrentWord(i);
+                            }
+                        });
                     }
 
+                    inputContainer.appendChild(input);
                     step.appendChild(stepNumber);
-                    step.appendChild(letterBoxes);
+                    step.appendChild(inputContainer);
                     board.appendChild(step);
                 }
 
                 // Focus first empty row
                 for (let i = 1; i < totalRows - 1; i++) {
                     if (!this.attempts[i - 1]) {
-                        document.getElementById(`box${i}-0`).focus();
+                        document.getElementById(`word${i}`).focus();
                         break;
                     }
                 }
@@ -859,12 +837,9 @@
                 const wordLength = this.puzzle.start.length;
                 const totalRows = this.puzzle.moves + 2;
 
-                // Collect the word from the current row
-                let word = '';
-                for (let j = 0; j < wordLength; j++) {
-                    const box = document.getElementById(`box${rowIndex}-${j}`);
-                    word += box.value.toUpperCase();
-                }
+                // Get the word from the input
+                const input = document.getElementById(`word${rowIndex}`);
+                const word = input.value.toUpperCase();
 
                 // Check if word is complete
                 if (word.length !== wordLength) {
@@ -872,46 +847,51 @@
                 }
 
                 // Get the expected word for this row from the solution
-                const solutionIndex = rowIndex - 1; // Row 1 = solution[0], Row 2 = solution[1], etc.
+                const solutionIndex = rowIndex - 1;
                 const expectedWord = this.puzzle.solution[solutionIndex];
 
-                let isValid = false;
-                let errorMessage = '';
+                // Check if it's a valid dictionary word
+                if (!VALID_WORDS.has(word)) {
+                    // Not a valid word - don't add to history, just show error and clear
+                    const messageEl = document.getElementById('message');
+                    messageEl.className = 'message error';
+                    messageEl.textContent = 'Not a valid word';
 
-                // Check if the word matches the expected solution for this position
-                if (word === expectedWord) {
-                    isValid = true;
-                } else {
-                    errorMessage = 'Invalid word';
+                    setTimeout(() => {
+                        input.value = '';
+                        input.classList.remove('correct', 'incorrect');
+                        messageEl.className = 'message';
+                        messageEl.textContent = '';
+                    }, 1000);
+                    return;
                 }
 
-                if (isValid) {
-                    // Only add valid words to history
-                    this.wordHistory.push(word);
-                    this.updateHistory();
+                // Word is valid - check if it's the correct answer
+                const isCorrect = (word === expectedWord);
 
-                    // Valid word - mark as correct and lock it
+                // Add to history (both correct and incorrect valid words)
+                this.wordHistory.push({ word: word, isCorrect: isCorrect });
+                this.updateHistory();
+
+                if (isCorrect) {
+                    // Correct word - mark as correct and lock it
                     const attemptIndex = rowIndex - 1;
                     this.attempts[attemptIndex] = word;
 
-                    for (let j = 0; j < wordLength; j++) {
-                        const box = document.getElementById(`box${rowIndex}-${j}`);
-                        box.classList.add('correct');
-                        box.disabled = true;
-                    }
+                    input.classList.add('correct');
+                    input.disabled = true;
 
                     // Move focus to next empty row (unless this is the last editable row)
-                    const lastEditableRow = totalRows - 2; // Row before END
+                    const lastEditableRow = totalRows - 2;
                     if (rowIndex < lastEditableRow) {
                         // Find next empty row
                         for (let nextRow = rowIndex + 1; nextRow <= lastEditableRow; nextRow++) {
                             const nextAttemptIndex = nextRow - 1;
                             if (!this.attempts[nextAttemptIndex]) {
-                                // Found an empty row, focus on its first box
                                 setTimeout(() => {
-                                    const firstBox = document.getElementById(`box${nextRow}-0`);
-                                    if (firstBox && !firstBox.disabled) {
-                                        firstBox.focus();
+                                    const nextInput = document.getElementById(`word${nextRow}`);
+                                    if (nextInput && !nextInput.disabled) {
+                                        nextInput.focus();
                                     }
                                 }, 100);
                                 break;
@@ -939,21 +919,18 @@
 
                     this.saveState();
                 } else {
-                    // Invalid word - show error and clear
+                    // Valid word but incorrect position - show message and clear
                     const messageEl = document.getElementById('message');
                     messageEl.className = 'message error';
-                    messageEl.textContent = errorMessage;
+                    messageEl.textContent = 'Valid word, but not the correct one for this position';
 
-                    // Clear the row after a short delay
+                    input.classList.add('incorrect');
+
                     setTimeout(() => {
-                        for (let j = 0; j < wordLength; j++) {
-                            const box = document.getElementById(`box${rowIndex}-${j}`);
-                            box.value = '';
-                            box.classList.remove('filled', 'correct', 'incorrect', 'error');
-                        }
-                        document.getElementById(`box${rowIndex}-0`).focus();
+                        input.value = '';
+                        input.classList.remove('incorrect');
+                        input.focus();
 
-                        // Clear message
                         setTimeout(() => {
                             messageEl.className = 'message';
                             messageEl.textContent = '';
@@ -963,114 +940,29 @@
             }
 
             checkSolution() {
-                this.attempts = [];
-                let allValid = true;
-                let message = '';
-                const wordLength = this.puzzle.start.length;
-                const totalRows = this.puzzle.moves + 2;
-
-                // Collect all attempts from editable letter boxes (rows 1 to totalRows-2)
-                for (let i = 1; i < totalRows - 1; i++) {
-                    let word = '';
-                    for (let j = 0; j < wordLength; j++) {
-                        const box = document.getElementById(`box${i}-${j}`);
-                        word += box.value.toUpperCase();
-                    }
-                    this.attempts.push(word);
-                }
-
-                // Validate each step starting from START word
-                let prevWord = this.puzzle.start;
-
-                for (let i = 1; i < totalRows - 1; i++) { // Skip START (0) and END (last)
-                    const attemptIndex = i - 1;
-                    const word = this.attempts[attemptIndex];
-                    let stepValid = true;
-
-                    // Reset all boxes in this step
-                    for (let j = 0; j < wordLength; j++) {
-                        const box = document.getElementById(`box${i}-${j}`);
-                        box.classList.remove('correct', 'incorrect', 'error');
-                    }
-
-                    if (!word || word.length !== wordLength) {
-                        allValid = false;
-                        stepValid = false;
-                        message = 'Please fill in all steps!';
-                        // Mark incomplete boxes
-                        for (let j = 0; j < wordLength; j++) {
-                            const box = document.getElementById(`box${i}-${j}`);
-                            if (!box.value) {
-                                box.classList.add('error');
-                            }
-                        }
-                        prevWord = word || prevWord;
-                        continue;
-                    }
-
-                    // Check if valid word
-                    if (!VALID_WORDS.has(word)) {
-                        allValid = false;
-                        stepValid = false;
-                        message = `"${word}" is not a valid word!`;
-                        for (let j = 0; j < wordLength; j++) {
-                            document.getElementById(`box${i}-${j}`).classList.add('incorrect');
-                        }
-                        prevWord = word;
-                        continue;
-                    }
-
-                    // Check if only one letter changed
-                    if (!this.isOneLetterDifferent(prevWord, word)) {
-                        allValid = false;
-                        stepValid = false;
-                        message = `You must change exactly one letter from ${prevWord} to ${word}!`;
-                        for (let j = 0; j < wordLength; j++) {
-                            document.getElementById(`box${i}-${j}`).classList.add('incorrect');
-                        }
-                        prevWord = word;
-                        continue;
-                    }
-
-                    // Mark all boxes as correct for this step
-                    if (stepValid) {
-                        for (let j = 0; j < wordLength; j++) {
-                            document.getElementById(`box${i}-${j}`).classList.add('correct');
-                        }
-                    }
-
-                    prevWord = word;
-                }
-
-                // Check if last editable word connects to END word
-                if (allValid) {
-                    const lastWord = this.attempts[this.attempts.length - 1];
-                    if (!this.isOneLetterDifferent(lastWord, this.puzzle.end)) {
-                        allValid = false;
-                        message = `Your last word (${lastWord}) must differ by exactly one letter from ${this.puzzle.end}!`;
-                        const lastRow = totalRows - 2;
-                        for (let j = 0; j < wordLength; j++) {
-                            document.getElementById(`box${lastRow}-${j}`).classList.remove('correct');
-                            document.getElementById(`box${lastRow}-${j}`).classList.add('incorrect');
-                        }
-                    }
-                }
-
-                // Display result
                 const messageEl = document.getElementById('message');
-                messageEl.className = 'message';
 
-                if (allValid) {
-                    messageEl.classList.add('success');
-                    messageEl.textContent = '🎉 Congratulations! You solved the puzzle!';
-                    this.saveWin();
-                    this.disableInputs();
-                } else {
-                    messageEl.classList.add('error');
-                    messageEl.textContent = message || 'Solution is incorrect. Keep trying!';
+                // Check if all rows are already complete
+                let allComplete = true;
+                for (let i = 0; i < this.puzzle.moves; i++) {
+                    if (!this.attempts[i]) {
+                        allComplete = false;
+                        break;
+                    }
                 }
 
-                this.saveState();
+                if (allComplete) {
+                    messageEl.className = 'message success';
+                    messageEl.textContent = '🎉 Congratulations! You solved the puzzle!';
+                } else {
+                    messageEl.className = 'message error';
+                    messageEl.textContent = 'Please complete all rows with the correct words!';
+
+                    setTimeout(() => {
+                        messageEl.className = 'message';
+                        messageEl.textContent = '';
+                    }, 2000);
+                }
             }
 
             isOneLetterDifferent(word1, word2) {
@@ -1087,13 +979,10 @@
             }
 
             disableInputs() {
-                const wordLength = this.puzzle.start.length;
                 const totalRows = this.puzzle.moves + 2;
                 // Disable only editable rows (not START or END which are already disabled)
                 for (let i = 1; i < totalRows - 1; i++) {
-                    for (let j = 0; j < wordLength; j++) {
-                        document.getElementById(`box${i}-${j}`).disabled = true;
-                    }
+                    document.getElementById(`word${i}`).disabled = true;
                 }
                 document.getElementById('checkBtn').disabled = true;
             }
