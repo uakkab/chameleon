@@ -387,7 +387,7 @@
             'CART', 'CAST', 'CASE', 'CAGE', 'PAGE', 'PALE', 'PANE', 'PINE', 'FINE', 'HEAL', 'TEAL', 'FORE',
             'FIRE', 'FARE', 'FACE', 'PACE', 'RACE', 'RICE', 'RICH', 'RIPE', 'RIDE', 'HEAD', 'HEAR', 'TEAR',
             'FEAR', 'FEAT', 'BEAT', 'HEAT', 'LOSE', 'LORE', 'SAKE', 'SANE', 'MANE', 'ROPE', 'ROBE', 'RODE',
-            'TALL', 'MOVE', 'SOFT', 'SORT', 'FORT', 'FORM', 'FIRM', 'TELL', 'FEST', 'HOVE',
+            'TALL', 'MOVE', 'SOFT', 'SORT', 'FORT', 'FORM', 'FIRM', 'TELL', 'FEST', 'HOVE', 'SEAL',
             'GAPE', 'FLOW', 'FLAW', 'FLAT', 'FAST',
             'HIDE', 'HIKE', 'LIKE', 'LIFE', 'LIFT', 'GIFT', 'GIRT', 'GIRL', 'GULL',
             'BULL', 'BULL', 'BALL', 'TALL', 'TALE', 'TAKE', 'MAKE', 'MADE', 'MATE',
@@ -411,13 +411,13 @@
         // Daily puzzles (start word, end word, number of moves)
         // Each step changes exactly ONE letter in ONE position
         const PUZZLES = [
-            { start: 'HEAD', end: 'TAIL', moves: 4, solution: ['HEAL', 'TEAL', 'TELL', 'TALL'] },
+            { start: 'HEAD', end: 'SEAL', moves: 3, solution: ['HEAL', 'TEAL', 'SEAL'] },
             { start: 'LOVE', end: 'HATE', moves: 3, solution: ['DOVE', 'DOTE', 'DATE'] },
             { start: 'COLD', end: 'WARM', moves: 3, solution: ['CORD', 'WORD', 'WORM'] },
-            { start: 'HATE', end: 'LOVE', moves: 2, solution: ['HAVE', 'HOVE'] },
+            { start: 'HATE', end: 'LOVE', moves: 3, solution: ['MATE', 'MOTE', 'MOVE'] },
             { start: 'SOFT', end: 'FIRM', moves: 3, solution: ['SORT', 'FORT', 'FORM'] },
-            { start: 'BALL', end: 'GAME', moves: 2, solution: ['GALL', 'GALE'] },
-            { start: 'FLOW', end: 'FAST', moves: 4, solution: ['FLAW', 'FLAT', 'FEAT', 'FEST'] },
+            { start: 'BALL', end: 'GAME', moves: 3, solution: ['GALL', 'GALE', 'GATE'] },
+            { start: 'HIDE', end: 'FIRE', moves: 3, solution: ['SIDE', 'SIRE', 'FIRE'] },
         ];
 
         class WordLadderGame {
