@@ -46,17 +46,30 @@
 
         .puzzle-info {
             background: #f8f9fa;
-            padding: 20px;
+            padding: 15px;
             border-radius: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
-        .word-display {
+        .moves-info {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .word-container {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            margin-bottom: 15px;
-            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .word-label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #999;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
         }
 
         .word {
@@ -76,18 +89,6 @@
             font-weight: bold;
             color: #667eea;
             background: #f0f3ff;
-        }
-
-        .arrow {
-            color: #999;
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .moves-info {
-            text-align: center;
-            color: #666;
-            font-size: 14px;
         }
 
         .game-board {
@@ -275,17 +276,22 @@
         <div class="subtitle">Daily Puzzle - One puzzle per day!</div>
 
         <div class="puzzle-info">
-            <div class="word-display">
-                <div class="word" id="startWord">COLD</div>
-                <div class="arrow">→</div>
-                <div class="word" id="endWord">WARM</div>
-            </div>
             <div class="moves-info">Transform the word in exactly <span id="maxMoves">5</span> steps</div>
+        </div>
+
+        <div class="word-container">
+            <div class="word-label">START</div>
+            <div class="word" id="startWord">COLD</div>
         </div>
 
         <div class="message" id="message"></div>
 
         <div class="game-board" id="gameBoard"></div>
+
+        <div class="word-container">
+            <div class="word-label">END</div>
+            <div class="word" id="endWord">WARM</div>
+        </div>
 
         <div class="buttons">
             <button class="primary" id="checkBtn">Check Solution</button>
