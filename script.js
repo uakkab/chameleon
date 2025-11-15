@@ -1,64 +1,60 @@
-// Word dictionary for validation (common 4-letter words)
-const VALID_WORDS = new Set([
-    'COLD', 'WARM', 'CORD', 'WORD', 'WORM', 'CORE', 'WORE', 'WARE', 'CARE', 'TOTE', 'GALE', 'DOTE',
-    'CART', 'CAST', 'CASE', 'CAGE', 'PAGE', 'PALE', 'PANE', 'PINE', 'FINE', 'HEAL', 'TEAL', 'FORE',
-    'FIRE', 'FARE', 'FACE', 'PACE', 'RACE', 'RICE', 'RICH', 'RIPE', 'RIDE', 'HEAD', 'HEAR', 'TEAR',
-    'FEAR', 'FEAT', 'BEAT', 'HEAT', 'LOSE', 'LORE', 'SAKE', 'SANE', 'MANE', 'ROPE', 'ROBE', 'RODE',
-    'TALL', 'MOVE', 'SOFT', 'SORT', 'FORT', 'FORM', 'FIRM', 'TELL', 'FEST', 'HOVE', 'SEAL',
-    'GAPE', 'FLOW', 'FLAW', 'FLAT', 'FAST',
-    'HIDE', 'HIKE', 'LIKE', 'LIFE', 'LIFT', 'GIFT', 'GIRT', 'GIRL', 'GULL',
-    'BULL', 'BULL', 'BALL', 'TALL', 'TALE', 'TAKE', 'MAKE', 'MADE', 'MATE',
-    'MOTE', 'MORE', 'GORE', 'GONE', 'BONE', 'BORE', 'BOLD', 'GOLD', 'GILD',
-    'MILD', 'MILE', 'MOLE', 'POLE', 'POLL', 'POOL', 'COOL', 'COAL', 'FOAL',
-    'FOAM', 'ROAM', 'ROAD', 'TOAD', 'TOLD', 'TOLL', 'TOOL', 'FOOL', 'FOOD',
-    'FORD', 'FORM', 'WORM', 'WORK', 'CORK', 'PORK', 'PORE', 'PORK', 'PORT',
-    'SORT', 'SORE', 'SURE', 'SURF', 'TURF', 'TURN', 'TORN', 'CORN', 'BORN',
-    'BARN', 'BARD', 'CARD', 'WARD', 'WAND', 'WANT', 'PANT', 'PINT', 'LINT',
-    'LINE', 'LONE', 'LOVE', 'DOVE', 'DOLE', 'DOME', 'HOME', 'HOPE', 'ROPE',
-    'ROBE', 'RODE', 'ROLE', 'ROLL', 'DOLL', 'DULL', 'DULL', 'DUNK', 'BUNK',
-    'BANK', 'BANE', 'BAND', 'LAND', 'LANE', 'SANE', 'SAND', 'SAID', 'SAIL',
-    'TAIL', 'FAIL', 'FALL', 'GALL', 'HALL', 'HALO', 'HALT', 'MALT', 'MALL',
-    'MALL', 'CALL', 'CALM', 'BALM', 'BALD', 'BILE', 'BIKE', 'BITE', 'SITE',
-    'SIRE', 'SIDE', 'TIDE', 'TIED', 'TIER', 'PIER', 'PIES', 'LIES', 'DIES',
-    'DIEM', 'DIRE', 'WIRE', 'WIDE', 'WADE', 'WAVE', 'WAVY', 'NAVY', 'NAVE',
-    'SAVE', 'SAGE', 'SAME', 'GAME', 'GATE', 'LATE', 'FATE', 'HATE', 'HAVE',
-    'CAVE', 'GAVE', 'GAZE', 'DAZE', 'DATE', 'DARE', 'HARE', 'HARD', 'HARM'
-]);
-
-// Daily puzzles (start word, end word, number of moves)
-// Each step changes exactly ONE letter in ONE position
-const PUZZLES = [
-    { start: 'HEAD', end: 'SEAL', moves: 3, solution: ['HEAL', 'TEAL', 'SEAL'] },
-    { start: 'LOVE', end: 'HATE', moves: 3, solution: ['DOVE', 'DOTE', 'DATE'] },
-    { start: 'COLD', end: 'WARM', moves: 3, solution: ['CORD', 'WORD', 'WORM'] },
-    { start: 'HATE', end: 'LOVE', moves: 3, solution: ['MATE', 'MOTE', 'MOVE'] },
-    { start: 'SOFT', end: 'FIRM', moves: 3, solution: ['SORT', 'FORT', 'FORM'] },
-    { start: 'BALL', end: 'GAME', moves: 3, solution: ['GALL', 'GALE', 'GATE'] },
-    { start: 'HIDE', end: 'FIRE', moves: 3, solution: ['SIDE', 'SIRE', 'FIRE'] },
-];
+// API base URL - adjust if running on different host/port
+const API_BASE = window.location.origin;
 
 class WordLadderGame {
     constructor() {
-        this.puzzle = this.getDailyPuzzle();
+        this.puzzle = null;
         this.attempts = [];
         this.changedPositions = []; // Track which position changed for each row
         this.wordHistory = [];
-        this.loadState();
         this.init();
     }
 
-    getDailyPuzzle() {
-        const puzzleIndex = Math.floor(Math.random() * PUZZLES.length);
-        return PUZZLES[puzzleIndex];
+    async init() {
+        try {
+            // Load saved state first (this will set puzzle if saved)
+            this.loadState();
+
+            // Fetch puzzle from API if not loaded from saved state
+            if (!this.puzzle) {
+                await this.getDailyPuzzle();
+            }
+
+            // Render the board
+            this.renderBoard();
+            this.updateStats();
+            this.updateHistory();
+
+            // Set up event listeners
+            document.getElementById('checkBtn').addEventListener('click', () => this.checkSolution());
+            document.getElementById('resetBtn').addEventListener('click', () => this.reset());
+        } catch (error) {
+            console.error('Error initializing game:', error);
+            this.showMessage('Error loading puzzle. Please refresh the page.', 'error');
+        }
     }
 
-    init() {
-        this.renderBoard();
-        this.updateStats();
-        this.updateHistory();
+    async getDailyPuzzle() {
+        try {
+            const response = await fetch(`${API_BASE}/api/puzzle`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch puzzle');
+            }
+            const puzzle = await response.json();
 
-        document.getElementById('checkBtn').addEventListener('click', () => this.checkSolution());
-        document.getElementById('resetBtn').addEventListener('click', () => this.reset());
+            // Transform the puzzle format to match what we expect
+            this.puzzle = {
+                id: puzzle.id,
+                start: puzzle.start_word,
+                end: puzzle.end_word,
+                moves: puzzle.moves
+            };
+
+            return this.puzzle;
+        } catch (error) {
+            console.error('Error fetching puzzle:', error);
+            throw error;
+        }
     }
 
     updateHistory() {
@@ -184,7 +180,7 @@ class WordLadderGame {
         }
     }
 
-    checkCurrentWord(rowIndex) {
+    async checkCurrentWord(rowIndex) {
         const wordLength = this.puzzle.start.length;
         const totalRows = this.puzzle.moves + 2;
 
@@ -200,38 +196,54 @@ class WordLadderGame {
             return;
         }
 
-        // Get the expected word for this row from the solution
-        const solutionIndex = rowIndex - 1;
-        const expectedWord = this.puzzle.solution[solutionIndex];
+        // Get the step number (rowIndex - 1 because row 0 is START)
+        const step = rowIndex;
 
-        // Check if it's a valid dictionary word
-        if (!VALID_WORDS.has(word)) {
-            // Not a valid word - don't add to history, just show error and clear
-            const messageEl = document.getElementById('message');
-            messageEl.className = 'message error';
-            messageEl.textContent = 'Not a valid word';
+        try {
+            // Validate word against the API
+            const response = await fetch(`${API_BASE}/api/validate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    puzzleId: this.puzzle.id,
+                    step: step,
+                    word: word
+                })
+            });
 
-            setTimeout(() => {
-                for (let j = 0; j < wordLength; j++) {
-                    const box = document.getElementById(`box${rowIndex}-${j}`);
-                    box.value = '';
-                    box.classList.remove('filled', 'correct', 'incorrect', 'error');
-                }
-                document.getElementById(`box${rowIndex}-0`).focus();
-                messageEl.className = 'message';
-                messageEl.textContent = '';
-            }, 1000);
-            return;
-        }
+            if (!response.ok) {
+                throw new Error('Validation failed');
+            }
 
-        // Word is valid - check if it's the correct answer
-        const isCorrect = (word === expectedWord);
+            const result = await response.json();
 
-        // Add to history (both correct and incorrect valid words)
-        this.wordHistory.push({ word: word, isCorrect: isCorrect });
-        this.updateHistory();
+            // Check if it's a valid dictionary word
+            if (!result.isValid) {
+                // Not a valid word - don't add to history, just show error and clear
+                this.showMessage('Not a valid word', 'error');
 
-        if (isCorrect) {
+                setTimeout(() => {
+                    for (let j = 0; j < wordLength; j++) {
+                        const box = document.getElementById(`box${rowIndex}-${j}`);
+                        box.value = '';
+                        box.classList.remove('filled', 'correct', 'incorrect', 'error');
+                    }
+                    document.getElementById(`box${rowIndex}-0`).focus();
+                    this.clearMessage();
+                }, 1000);
+                return;
+            }
+
+            // Word is valid - check if it's a correct answer for this step
+            const isCorrect = result.isCorrect;
+
+            // Add to history (both correct and incorrect valid words)
+            this.wordHistory.push({ word: word, isCorrect: isCorrect });
+            this.updateHistory();
+
+            if (isCorrect) {
             // Correct word - mark as correct and lock it
             const attemptIndex = rowIndex - 1;
             this.attempts[attemptIndex] = word;
@@ -304,9 +316,7 @@ class WordLadderGame {
             this.saveState();
         } else {
             // Valid word but incorrect position - show message and clear
-            const messageEl = document.getElementById('message');
-            messageEl.className = 'message error';
-            messageEl.textContent = 'Valid word, but not the correct one for this position';
+            this.showMessage('Valid word, but not the correct one for this position', 'error');
 
             for (let j = 0; j < wordLength; j++) {
                 const box = document.getElementById(`box${rowIndex}-${j}`);
@@ -322,16 +332,29 @@ class WordLadderGame {
                 document.getElementById(`box${rowIndex}-0`).focus();
 
                 setTimeout(() => {
-                    messageEl.className = 'message';
-                    messageEl.textContent = '';
+                    this.clearMessage();
                 }, 1500);
             }, 1000);
         }
+        } catch (error) {
+            console.error('Error validating word:', error);
+            this.showMessage('Error validating word. Please try again.', 'error');
+        }
+    }
+
+    showMessage(text, type = 'info') {
+        const messageEl = document.getElementById('message');
+        messageEl.className = `message ${type}`;
+        messageEl.textContent = text;
+    }
+
+    clearMessage() {
+        const messageEl = document.getElementById('message');
+        messageEl.className = 'message';
+        messageEl.textContent = '';
     }
 
     checkSolution() {
-        const messageEl = document.getElementById('message');
-
         // Check if all rows are already complete
         let allComplete = true;
         for (let i = 0; i < this.puzzle.moves; i++) {
@@ -342,15 +365,12 @@ class WordLadderGame {
         }
 
         if (allComplete) {
-            messageEl.className = 'message success';
-            messageEl.textContent = '🎉 Congratulations! You solved the puzzle!';
+            this.showMessage('🎉 Congratulations! You solved the puzzle!', 'success');
         } else {
-            messageEl.className = 'message error';
-            messageEl.textContent = 'Please complete all rows with the correct words!';
+            this.showMessage('Please complete all rows with the correct words!', 'error');
 
             setTimeout(() => {
-                messageEl.className = 'message';
-                messageEl.textContent = '';
+                this.clearMessage();
             }, 2000);
         }
     }
@@ -380,16 +400,18 @@ class WordLadderGame {
         document.getElementById('checkBtn').disabled = true;
     }
 
-    reset() {
+    async reset() {
         this.attempts = [];
         this.changedPositions = [];
         this.wordHistory = [];
+
+        // Optionally get a new puzzle
+        await this.getDailyPuzzle();
+
         this.renderBoard();
         this.updateHistory();
 
-        const messageEl = document.getElementById('message');
-        messageEl.className = 'message';
-        messageEl.textContent = '';
+        this.clearMessage();
 
         document.getElementById('checkBtn').disabled = false;
         this.saveState();
@@ -410,8 +432,9 @@ class WordLadderGame {
         const saved = localStorage.getItem('wordLadderState');
         if (saved) {
             const state = JSON.parse(saved);
-            if (state.date === this.getToday() &&
-                JSON.stringify(state.puzzle) === JSON.stringify(this.puzzle)) {
+            // Only load state if it's from today
+            if (state.date === this.getToday() && state.puzzle) {
+                this.puzzle = state.puzzle;
                 this.attempts = state.attempts || [];
                 this.changedPositions = state.changedPositions || [];
                 this.wordHistory = state.wordHistory || [];
